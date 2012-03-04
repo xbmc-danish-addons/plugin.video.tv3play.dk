@@ -130,7 +130,7 @@ class TV3PlayAddon(object):
 
         adNodes = None
         start = 0
-        for idx, node in enumerate(doc.iterfind('Product/AdCalls/midroll')):
+        for idx, node in enumerate(doc.findall('Product/AdCalls/midroll')):
             if adNodes is None:
                 adXml = self.downloadUrl(node.get('url'))
                 adDoc = ElementTree.fromstring(adXml)
@@ -192,7 +192,7 @@ class TV3PlayAddon(object):
             xml = self.getPlayProductXml(m.group(1))
 
             fanartUrl = None
-            for node in xml.iterfind    ('Product/Images/ImageMedia'):
+            for node in xml.findall('Product/Images/ImageMedia'):
                 if node.findtext('Usage') == 'PlayImage':
                     fanartUrl = node.findtext('Url')
                     break

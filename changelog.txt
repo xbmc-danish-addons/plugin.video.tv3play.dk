@@ -1,2 +1,5 @@
+[B]Version 0.0.2 - 2012-03-04[/B]
+- Fixed compatibility with Python 2.6.x
+
 [B]Version 0.0.1 - 2012-03-03[/B]
 - Proof of concept test release
