@@ -58,57 +58,87 @@ class TV3PlayAddon(object):
         html = self.downloadUrl(self.getBaseUrl() + '/program/%s' % slug)
         fanart = self.downloadAndCacheFanart(slug, html)
 
-        seasons = list()
-        for m in re.finditer('<strong>(.*?[0-9]+.*?)</strong>', html):
+        m = re.search('Table body(.*?)</tbody>.*?Table body(.*?)</tbody>', html, re.DOTALL)
+        episodesHtml = m.group(1)
+        clipsHtml = m.group(2)
+
+        seasons = episodesHtml.split('class="season-head')
+        for seasonHtml in seasons:
+            m = re.search('<strong>(.*?)</strong>', seasonHtml)
             season = m.group(1)
+            videoCount = seasonHtml.count('href="/play/')
+            if videoCount > 0:
+                item = xbmcgui.ListItem(season, iconImage = ICON)
+                if fanart:
+                    item.setIconImage(fanart)
+                    item.setProperty('Fanart_Image', fanart)
+                xbmcplugin.addDirectoryItem(HANDLE, PATH + '?program=%s&season=%s' % (slug, season), item, True, videoCount)
 
-            if not seasons.count(season):
-                seasons.append(season)
+        seasons = clipsHtml.split('class="season-head')
+        for seasonHtml in seasons:
+            m = re.search('<strong>(.*?)</strong>', seasonHtml)
+            season = m.group(1)
+            videoCount = seasonHtml.count('href="/play/')
+            if videoCount > 0:
+                item = xbmcgui.ListItem('%s (%s)' % (season.decode('utf8', 'ignore'), ADDON.getLocalizedString(103)), iconImage = ICON)
+                if fanart:
+                    item.setIconImage(fanart)
+                    item.setProperty('Fanart_Image', fanart)
+                xbmcplugin.addDirectoryItem(HANDLE, PATH + '?program=%s&season=%s&clips=true' % (slug, season), item, True, videoCount)
 
-        items = list()
-        seasons.sort()
-        for season in seasons:
-            item = xbmcgui.ListItem(season, iconImage = ICON)
-            if fanart:
-                item.setIconImage(fanart)
-                item.setProperty('Fanart_Image', fanart)
-            items.append((PATH + '?program=%s&season=%s' % (slug, season), item, True))
 
-        xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.endOfDirectory(HANDLE)
 
 
-    def listVideos(self, slug, season):
+    def listVideos(self, slug, season, clips = False):
         html = self.downloadUrl(self.getBaseUrl() + '/program/%s' % slug)
         fanart = self.downloadAndCacheFanart(slug, html)
 
-        m = re.search(season + '</strong>(.*?)<strong>', html, re.DOTALL)
-        snip = m.group(1)
+        m = re.search('Table body(.*?)</tbody>.*?Table body(.*?)</tbody>', html, re.DOTALL)
+        if clips:
+            html = m.group(2)
+        else:
+            html = m.group(1)
+
+        seasons = html.split('class="season-head')
+        for seasonHtml in seasons:
+            if seasonHtml.count(season) > 0:
+                snip = seasonHtml
+                break
 
         items = list()
-        for m in re.finditer('<a href="/play/([0-9]+)/" >([^<]+)<.*?col2">([^<]+)<.*?col3">([^<]+)<.*?col4">([^<]+)<', snip, re.DOTALL):
+        for m in re.finditer('<a href="/play/([0-9]+)/".*?>([^<]+)<.*?col2">([^<]*)<.*?col3">([^<]+)<.*?col4">([^<]*)<.*?rated-([0-5])', snip, re.DOTALL):
             videoId = m.group(1)
             title = m.group(2)
             episode = m.group(3)
             duration = m.group(4)
             airDate = m.group(5)
+            rating = int(m.group(6)) * 2.0
 
-            aired = '20%s-%s-%s' % (airDate[6:8], airDate[3:5], airDate[0:2])
+            date = '%s.%s.20%s' % (airDate[0:2], airDate[3:5], airDate[6:8])
 
-            item = xbmcgui.ListItem('%s (%s)' % (title, episode), iconImage = ICON)
-            item.setInfo('video', {
+            infoLabels = {
+                'title' : title,
+                'date' : date,
                 'studio' : ADDON.getAddonInfo('name'),
                 'duration' : duration,
-                'episode' : int(episode),
-                'aired' : aired
-            })
+                'rating' : rating
+            }
+            if episode:
+                infoLabels['episode'] = int(episode)
+
+            item = xbmcgui.ListItem(title, iconImage = ICON)
+            item.setInfo('video', infoLabels)
             item.setProperty('IsPlayable', 'true')
             if fanart:
                 item.setIconImage(fanart)
                 item.setProperty('Fanart_Image', fanart)
             items.append((PATH + '?playVideo=%s' % videoId, item))
 
-        items.reverse()
+        if not clips:
+            items.reverse()
+            xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_EPISODE)
+            xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.endOfDirectory(HANDLE)
 
@@ -133,7 +163,7 @@ class TV3PlayAddon(object):
         for idx, node in enumerate(doc.findall('Product/AdCalls/midroll')):
             if adNodes is None:
                 adXml = self.downloadUrl(node.get('url'))
-                adDoc = ElementTree.fromstring(adXml)
+                adDoc = ElementTree.fromstring(adXml.decode('utf8', 'ignore'))
                 adNodes = adDoc.findall('Ad')
 
             print 'time %s' % node.get('time')
@@ -167,6 +197,7 @@ class TV3PlayAddon(object):
 
     def getPlayProductXml(self, videoId):
         xml = self.downloadUrl('http://viastream.viasat.tv/PlayProduct/%s' % videoId)
+        xml = re.sub('&[^a]', '&amp;', xml)
         return ElementTree.fromstring(xml)
 
     def getRtmpUrl(self, videoUrl):
@@ -260,7 +291,7 @@ if __name__ == '__main__':
         if PARAMS.has_key('playVideo'):
             tv3PlayAddon.playVideo(PARAMS['playVideo'][0])
         elif PARAMS.has_key('program') and PARAMS.has_key('season'):
-            tv3PlayAddon.listVideos(PARAMS['program'][0], PARAMS['season'][0])
+            tv3PlayAddon.listVideos(PARAMS['program'][0], PARAMS['season'][0], PARAMS.has_key('clips'))
         elif PARAMS.has_key('program'):
             tv3PlayAddon.listSeasons(PARAMS['program'][0])
 

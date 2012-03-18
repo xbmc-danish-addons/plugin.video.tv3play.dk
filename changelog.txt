@@ -1,3 +1,7 @@
+[B]Version 0.0.3 - 2012-03-18[/B]
+- Fixed problem with some videos not playing
+- Added clips ('Klipliste') content as well
+
 [B]Version 0.0.2 - 2012-03-04[/B]
 - Fixed compatibility with Python 2.6.x
 
