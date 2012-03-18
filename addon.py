@@ -202,19 +202,19 @@ class TV3PlayAddon(object):
 
     def getRtmpUrl(self, videoUrl):
         if videoUrl[0:4] == 'rtmp':
-            return videoUrl
+            return videoUrl.replace(' ', '%20')
 
         xml = self.downloadUrl(videoUrl)
         doc = ElementTree.fromstring(xml)
 
         if doc.findtext('Success') == 'true':
-            return doc.findtext('Url')
+            return doc.findtext('Url').replace(' ', '%20')
         else:
             raise TV3PlayException(doc.findtext('Msg'))
 
     def getXml(self, url):
         xml = self.downloadUrl(url)
-        return ElementTree.fromstring(xml)
+        return ElementTree.fromstring(xml.decode('utf8', 'ignore'))
 
     def downloadAndCacheFanart(self, slug, html):
         fanartPath = os.path.join(CACHE_PATH, '%s.jpg' % slug.encode('iso-8859-1', 'replace'))
