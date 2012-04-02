@@ -46,9 +46,10 @@ class TV3PlayAddon(object):
             fanart = self.downloadAndCacheFanart(slug, None)
 
             item = xbmcgui.ListItem(title, iconImage=ICON)
-            if fanart:
-                item.setIconImage(fanart)
-                item.setProperty('Fanart_Image', fanart)
+            if not fanart:
+                fanart = FANART
+            item.setIconImage(fanart)
+            item.setProperty('Fanart_Image', fanart)
             items.append((PATH + '?program=%s' % slug, item, True))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
@@ -81,9 +82,10 @@ class TV3PlayAddon(object):
             videoCount = seasonHtml.count('href="/play/')
             if videoCount > 0:
                 item = xbmcgui.ListItem('%s (%s)' % (season.decode('utf8', 'ignore'), ADDON.getLocalizedString(103)), iconImage = ICON)
-                if fanart:
-                    item.setIconImage(fanart)
-                    item.setProperty('Fanart_Image', fanart)
+                if not fanart:
+                    fanart = FANART
+                item.setIconImage(fanart)
+                item.setProperty('Fanart_Image', fanart)
                 xbmcplugin.addDirectoryItem(HANDLE, PATH + '?program=%s&season=%s&clips=true' % (slug, season), item, True, videoCount)
 
 
@@ -100,6 +102,7 @@ class TV3PlayAddon(object):
         else:
             html = m.group(1)
 
+        snip = ''
         seasons = html.split('class="season-head')
         for seasonHtml in seasons:
             if seasonHtml.count(season) > 0:
@@ -130,9 +133,10 @@ class TV3PlayAddon(object):
             item = xbmcgui.ListItem(title, iconImage = ICON)
             item.setInfo('video', infoLabels)
             item.setProperty('IsPlayable', 'true')
-            if fanart:
-                item.setIconImage(fanart)
-                item.setProperty('Fanart_Image', fanart)
+            if not fanart:
+                fanart = FANART
+            item.setIconImage(fanart)
+            item.setProperty('Fanart_Image', fanart)
             items.append((PATH + '?playVideo=%s' % videoId, item))
 
         if not clips:
@@ -156,7 +160,6 @@ class TV3PlayAddon(object):
             flvUrl = node.findtext('InLine/Creatives/Creative/Linear/MediaFiles/MediaFile')
             item = xbmcgui.ListItem(ADDON.getLocalizedString(100), iconImage = ICON)
             playlist.add(flvUrl, item)
-            print 'ad %s' % flvUrl
 
         adNodes = None
         start = 0
@@ -166,23 +169,19 @@ class TV3PlayAddon(object):
                 adDoc = ElementTree.fromstring(adXml.decode('utf8', 'ignore'))
                 adNodes = adDoc.findall('Ad')
 
-            print 'time %s' % node.get('time')
             stop = int(node.get('time'))
             itemUrl = rtmpUrl + ' start=%d stop=%d' % (start * 1000, stop * 1000)
             featureItem = xbmcgui.ListItem(doc.findtext('Product/Title'), thumbnailImage=doc.findtext('Product/Images/ImageMedia/Url'), path = itemUrl)
             playlist.add(itemUrl, featureItem)
-            print 'video %s -> %s' % (start, stop)
             start = stop
 
             if len(adNodes) > idx:
                 item = xbmcgui.ListItem(ADDON.getLocalizedString(100), iconImage = ICON)
                 playlist.add(adNodes[idx].findtext('InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'), item)
-                print 'ad %s' % adNodes[idx].findtext('InLine/Creatives/Creative/Linear/MediaFiles/MediaFile')
 
         itemUrl = rtmpUrl + ' start=%d' % (start * 1000)
         featureItem = xbmcgui.ListItem(doc.findtext('Product/Title'), thumbnailImage=doc.findtext('Product/Images/ImageMedia/Url'), path = itemUrl)
         playlist.add(itemUrl, featureItem)
-        print 'video %s -> end' % start
 
         # Postroll
         url = doc.find('Product/AdCalls/postroll').get('url')
@@ -191,7 +190,6 @@ class TV3PlayAddon(object):
             flvUrl = node.findtext('InLine/Creatives/Creative/Linear/MediaFiles/MediaFile')
             item = xbmcgui.ListItem(ADDON.getLocalizedString(100), iconImage = ICON)
             playlist.add(flvUrl, item)
-            print 'ad %s' % flvUrl
 
         xbmcplugin.setResolvedUrl(HANDLE, True, playlist[0])
 
@@ -250,7 +248,6 @@ class TV3PlayAddon(object):
         return 'http://www.%s' % ADDON.getSetting('region.url')
 
     def downloadUrl(self, url):
-        print "_downloader: %s" % url.encode('iso-8859-1', 'replace')
         for retries in range(0, 5):
             try:
                 r = urllib2.Request(url.encode('iso-8859-1', 'replace'))
@@ -262,7 +259,6 @@ class TV3PlayAddon(object):
             except urllib2.URLError:
                 return None
             except Exception, ex:
-                print 'Retrying... %s' % str(ex)
                 if retries > 5:
                     raise TV3PlayException(ex)
 
@@ -280,6 +276,7 @@ if __name__ == '__main__':
     PARAMS = urlparse.parse_qs(sys.argv[2][1:])
 
     ICON = os.path.join(ADDON.getAddonInfo('path'), 'icon.png')
+    FANART = os.path.join(ADDON.getAddonInfo('path'), 'fanart.jpg')
 
     CACHE_PATH = xbmc.translatePath(ADDON.getAddonInfo("Profile"))
     if not os.path.exists(CACHE_PATH):
