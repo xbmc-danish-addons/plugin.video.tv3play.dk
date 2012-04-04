@@ -203,6 +203,8 @@ class TV3PlayAddon(object):
             return videoUrl.replace(' ', '%20')
 
         xml = self.downloadUrl(videoUrl)
+        if not xml:
+            raise TV3PlayException(ADDON.getLocalizedString(202))
         doc = ElementTree.fromstring(xml)
 
         if doc.findtext('Success') == 'true':
@@ -218,6 +220,8 @@ class TV3PlayAddon(object):
         fanartPath = os.path.join(CACHE_PATH, '%s.jpg' % slug.encode('iso-8859-1', 'replace'))
         if not os.path.exists(fanartPath) and html:
             m = re.search('/play/([0-9]+)/', html)
+            if not m:
+                return None
             xml = self.getPlayProductXml(m.group(1))
 
             fanartUrl = None
@@ -256,8 +260,6 @@ class TV3PlayAddon(object):
                 contents = u.read()
                 u.close()
                 return contents
-            except urllib2.URLError:
-                return None
             except Exception, ex:
                 if retries > 5:
                     raise TV3PlayException(ex)
@@ -283,6 +285,7 @@ if __name__ == '__main__':
         os.makedirs(CACHE_PATH)
 
     buggalo.SUBMIT_URL = 'http://tommy.winther.nu/exception/submit.php'
+    buggalo.addExtraData('region', ADDON.getSetting('region.url'))
     tv3PlayAddon = TV3PlayAddon()
     try:
         if PARAMS.has_key('playVideo'):

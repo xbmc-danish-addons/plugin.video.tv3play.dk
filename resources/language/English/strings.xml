@@ -9,4 +9,5 @@
 
     <string id="200">There was an error while communication with TV3 Play.</string>
     <string id="201">The error message is:</string>
+    <string id="202">Unable to find the playback URL</string>
 </strings>
