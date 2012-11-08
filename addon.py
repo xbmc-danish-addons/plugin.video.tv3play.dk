@@ -280,7 +280,9 @@ class TV3PlayAddon(object):
             return ElementTree.Element('data-not-loaded') # to avoid unnessecary error handling
 
     def getRtmpUrl(self, videoUrl):
-        if videoUrl[0:4] == 'rtmp':
+        if videoUrl.startswith('rtmp://tv3playee.data.lt/mtg/'):
+            return videoUrl.replace('rtmp://tv3playee.data.lt/mtg/', 'rtmp://tv3playee.data.lt/mtg/mtg/')
+        elif videoUrl[0:4] == 'rtmp':
             return videoUrl.replace(' ', '%20')
 
         xml = self.downloadUrl(videoUrl)
