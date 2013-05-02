@@ -223,10 +223,10 @@ class TV3PlayAddon(object):
             node = self.getXml(url).find('Ad')
             if node is not None:
                 flvUrl = node.findtext('InLine/Creatives/Creative/Linear/MediaFiles/MediaFile')
-                item = xbmcgui.ListItem(ADDON.getLocalizedString(100), iconImage = ICON)
-                playlist.add(flvUrl, item)
-
-                firstItem = item
+                if flvUrl:
+                    item = xbmcgui.ListItem(ADDON.getLocalizedString(100), iconImage = ICON)
+                    playlist.add(flvUrl, item)
+                    firstItem = item
 
         start = 0
         for idx, node in enumerate(doc.findall('Product/AdCalls/midroll')):
