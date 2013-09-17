@@ -24,7 +24,7 @@ import urllib
 IPAD_USERAGENT = 'TV3 Play/1.0.3 CFNetwork/548.0.4 Darwin/11.0.0'
 
 API_URL = ' http://www.%s/mobileapi/%s'
-IMAGE_URL = 'http://play.pdl.viaplay.com/%s'
+IMAGE_URL = 'http://play.pdl.viaplay.com/imagecache/1280x720/%s'
 VIASTREAM_URL = 'http://viastream.viasat.tv/%s'
 
 
