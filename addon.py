@@ -102,7 +102,7 @@ class TV3PlayAddon(object):
         items = list()
 
         videos = self.api.getVideos(category)
-        for video in videos:
+        for video in videos['video_program']:
             fanart = mobileapi.IMAGE_URL % video['image'].replace(' ', '%20')
 
             infoLabels = {
