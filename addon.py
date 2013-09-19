@@ -103,7 +103,7 @@ class TV3PlayAddon(object):
         items = list()
 
         videos = self.api.getVideos(category)
-        for video in videos['video_program']:
+        for video in videos:
             fanart = mobileapi.IMAGE_URL % video['image'].replace(' ', '%20')
 
             infoLabels = {
@@ -118,7 +118,7 @@ class TV3PlayAddon(object):
                 infoLabels['date'] = '%s.%s.%s' % (airdate[8:10], airdate[5:7], airdate[0:4])
                 infoLabels['year'] = int(airdate[0:4])
 
-            if 'episode' in video:
+            if 'episode' in video and video['episode'] is not None:
                 infoLabels['episode'] = int(video['episode'])
 
             item = xbmcgui.ListItem(video['title'], iconImage=fanart)
