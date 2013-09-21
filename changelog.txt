@@ -1,3 +1,7 @@
+[B]Version 2.0.5 - 2013-09-21[/B]
+- Added tv6play.se, tv8play.se, tv10play.se and play.novatv.bg
+- Corrected strings.xml id's
+
 [B]Version 2.0.4 - 2013-09-19[/B]
 - More site changes
 
