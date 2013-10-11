@@ -98,12 +98,11 @@ class TV3PlayAddon(object):
             infoLabels = {
                 'title': video['title'],
                 'studio': ADDON.getAddonInfo('name'),
-                'plot': video['description'],
                 'plotoutline': video['summary'],
                 'tvshowtitle': video['formattitle']
             }
-            if 'length' in video and video['length'] is not None:
-                infoLabels['duration'] = int(video['length']) / 60
+            if 'description' in video and video['description'] is not None:
+                infoLabels['plot'] = video['description']
 
             if 'airdate' in video and video['airdate'] is not None:
                 airdate = video['airdate']
@@ -129,17 +128,15 @@ class TV3PlayAddon(object):
         playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
         playlist.clear()
 
-        data = self.api.getMobileData(videoId)
-        if data is not None and 'adcalls' in data and data['adcalls'][0]['type'] == 'preroll':
-            xml = self.api._http_request(data['adcalls'][0]['url'])
-
-            m = re.search('<MediaFile[^>]+><!\[CDATA\[(.*)\]\]></MediaFile>', xml)
+        xml = self.api._http_request('http://viastream.viasat.tv/extra/extraN.php?clipid=%s' % videoId)
+        if '<Url>' in xml:
+            m = re.search('<Url>(.*)</Url>', xml)
             if m:
-                item = xbmcgui.ListItem(ADDON.getLocalizedString(30100), iconImage=ICON)
-                playlist.add(m.group(1), item)
-
-        url = self.api.getMobileStream(videoId)
-        playlist.add(url)
+                rtmp = m.group(1).replace('rtmp://tv3playee.data.lt/mtg/', 'rtmp://tv3playee.data.lt/mtg/mtg/')
+                rtmp = rtmp.replace('mp4:flash', 'flash')
+                rtmp = rtmp.replace(' ', '%20')
+                rtmp += ' swfUrl=http://flvplayer.viastream.viasat.tv/play/swf/player111227.swf swfVfy=true'
+                playlist.add(rtmp)
 
         xbmcplugin.setResolvedUrl(HANDLE, True, playlist[0])
 
