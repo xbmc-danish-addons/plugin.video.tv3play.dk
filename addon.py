@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-#      Copyright (C) 2015 Tommy Winther
-#      http://tommy.winther.nu
+# Contributors:
+#      Tommy Winther
+#      Anders Norman
 #
 #  This Program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
