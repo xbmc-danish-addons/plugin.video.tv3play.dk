@@ -125,7 +125,7 @@ class TV3PlayAddon(object):
                 'tvshowtitle': episode['format_title']
             }
             if 'duration' in episode and episode['duration'] is not None:
-                info_labels['duration'] = int(episode['duration']) / 60
+                info_labels['duration'] = int(episode['duration'])
 
             if 'broadcasts' in episode:
                 if 'air_at' in episode['broadcasts'] and episode['broadcasts']['air_at'] is not None:
