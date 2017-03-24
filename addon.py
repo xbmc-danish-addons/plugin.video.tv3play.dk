@@ -32,6 +32,7 @@ import xbmcaddon
 import xbmcplugin
 
 import buggalo
+import time
 
 from mtgapi import MtgApi, MtgApiException
 
@@ -154,6 +155,7 @@ class TV3PlayAddon(object):
                 url = streams['medium']
             elif 'low' in streams and streams['low'] is not None:
                 url = streams['low']
+            url = 'plugin://plugin.video.tv3play.dk/?action=playVideo&playVideo=' + url
             items.append((url, item))
 
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_EPISODE)
@@ -162,23 +164,51 @@ class TV3PlayAddon(object):
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.endOfDirectory(HANDLE)
 
-    def playVideo(self, videoId):
+    def getSubtitles(self, videoUrl):
+        videoPath = videoUrl.replace('playlist.m3u8', '')
+        reload(sys)
+        sys.setdefaultencoding('utf8')
+
+        playListFile = urllib.urlopen(videoUrl).read()
+        playListFile = playListFile.encode('utf-8')
+        for line in playListFile.splitlines(True):
+            subsearch = re.match(r'^#EXT-X-MEDIA:.*ID="subs".*AUTOSELECT=YES.*URI="(\w*.m3u8)', line)
+            if subsearch:
+                subsFile = subsearch.group(1)
+                break
+        if subsFile:
+            subsFile = urllib.urlopen(videoPath + subsFile).read()
+            subsFile = subsFile.encode('utf8')
+            vttSubs = ''
+            for line in subsFile.splitlines(True):
+                chunk = re.match(r"(.*).webvtt", line)
+                if chunk:
+                    vttSubs = vttSubs + '\n'
+                    vttSubs = vttSubs + urllib.urlopen(videoPath + chunk.group()).read()
+        srtFile = os.path.join(xbmc.translatePath("special://temp"), 'tv3play.srt')
+        if len(vttSubs) > 0:
+            srtSubs = [line.replace('.',',') for line in vttSubs.splitlines(True)]
+            fh = open(srtFile, 'w')
+            try:
+                fh.writelines(srtSubs[3:])
+            finally:
+                fh.close()
+
+        return srtFile
+
+    def playVideo(self, videoUrl):
         playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
         playlist.clear()
-
-        data = self.api.getMobileData(videoId)
-        if data is not None and 'adcalls' in data and data['adcalls'][0]['type'] == 'preroll':
-            xml = self.api._http_request(data['adcalls'][0]['url'])
-
-            m = re.search('<MediaFile[^>]+><!\[CDATA\[(.*)\]\]></MediaFile>', xml)
-            if m:
-                item = xbmcgui.ListItem(ADDON.getLocalizedString(30100), iconImage=ICON)
-                playlist.add(m.group(1), item)
-
-        url = self.api.getMobileStream(videoId)
-        playlist.add(url)
-
+        playlist.add(videoUrl)
         xbmcplugin.setResolvedUrl(HANDLE, True, playlist[0])
+
+        subs_file = self.getSubtitles(videoUrl)
+        player = xbmc.Player();
+        start_time = time.time();
+        while not player.isPlaying() and time.time() - start_time < 30:
+            time.sleep(1);
+        if player.isPlaying():
+            xbmc.Player().setSubtitles(subs_file)
 
     def displayError(self, message='n/a'):
         heading = buggalo.getRandomHeading()
@@ -193,7 +223,6 @@ if __name__ == '__main__':
     PATH = sys.argv[0]
     HANDLE = int(sys.argv[1])
     PARAMS = urlparse.parse_qs(sys.argv[2][1:])
-
     ICON = os.path.join(ADDON.getAddonInfo('path'), 'icon.png')
     FANART = os.path.join(ADDON.getAddonInfo('path'), 'fanart.jpg')
 
