@@ -155,9 +155,8 @@ class TV3PlayAddon(object):
                 url = streams['medium']
             elif 'low' in streams and streams['low'] is not None:
                 url = streams['low']
-            url = self._build_url({'action': 'playVideo', 'playVideo': url})
+            url = self._build_url({'action': 'playVideo', 'playVideo': url, 'title': episode['title']})
             items.append((url, item))
-
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_EPISODE)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
@@ -171,15 +170,15 @@ class TV3PlayAddon(object):
 
         playListFile = urllib.urlopen(videoUrl).read()
         playListFile = playListFile.encode('utf-8')
-        srtFile = ''
-        subsFile = ''
-        vttSubs = ''
+        srtFile = None
+        subsFile = None
+        vttSubs = None
         for line in playListFile.splitlines(True):
             subsearch = re.match(r'^#EXT-X-MEDIA:.*ID="subs".*AUTOSELECT=YES.*URI="(\w*.m3u8)', line)
             if subsearch:
                 subsFile = subsearch.group(1)
                 break
-        if len(subsFile) > 0:
+        if subsFile:
             subsFile = urllib.urlopen(videoPath + subsFile).read()
             subsFile = subsFile.encode('utf8')
             vttSubs = ''
@@ -188,7 +187,7 @@ class TV3PlayAddon(object):
                 if chunk:
                     vttSubs = vttSubs + '\n'
                     vttSubs = vttSubs + urllib.urlopen(videoPath + chunk.group()).read()
-        if len(vttSubs) > 0:
+        if vttSubs:
             srtFile = os.path.join(xbmc.translatePath("special://temp"), 'tv3play.srt')
             srtSubs = [line.replace('.',',') for line in vttSubs.splitlines(True)]
             fh = open(srtFile, 'w')
@@ -199,15 +198,15 @@ class TV3PlayAddon(object):
 
         return srtFile
 
-    def playVideo(self, videoUrl):
+    def playVideo(self, videoUrl, videoTitle):
         playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
         playlist.clear()
-        playlist.add(videoUrl)
+        playlist.add(videoUrl, xbmcgui.ListItem(videoTitle, iconImage=ICON))
         xbmcplugin.setResolvedUrl(HANDLE, True, playlist[0])
 
         player = xbmc.Player();
         subs_file = self.getSubtitles(videoUrl)
-        if len(subs_file) > 0:
+        if subs_file:
             start_time = time.time();
             while not player.isPlaying() and time.time() - start_time < 30:
                 time.sleep(1);
@@ -244,7 +243,7 @@ if __name__ == '__main__':
     tv3PlayAddon = TV3PlayAddon(r)
     try:
         if 'playVideo' in PARAMS:
-            tv3PlayAddon.playVideo(PARAMS['playVideo'][0])
+            tv3PlayAddon.playVideo(PARAMS['playVideo'][0], PARAMS['title'][0])
         elif 'episodes_url' in PARAMS:
             tv3PlayAddon.listEpisodes(PARAMS['episodes_url'][0])
         elif 'seasons_url' in PARAMS:
