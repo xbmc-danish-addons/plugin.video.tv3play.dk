@@ -155,7 +155,7 @@ class TV3PlayAddon(object):
                 url = streams['medium']
             elif 'low' in streams and streams['low'] is not None:
                 url = streams['low']
-            url = 'plugin://plugin.video.tv3play.dk/?action=playVideo&playVideo=' + url
+            url = '{0}?action=playVideo&playVideo={1}'.format(PATH, url)
             items.append((url, item))
 
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_EPISODE)
@@ -171,12 +171,15 @@ class TV3PlayAddon(object):
 
         playListFile = urllib.urlopen(videoUrl).read()
         playListFile = playListFile.encode('utf-8')
+        srtFile = ''
+        subsFile = ''
+        vttSubs = ''
         for line in playListFile.splitlines(True):
             subsearch = re.match(r'^#EXT-X-MEDIA:.*ID="subs".*AUTOSELECT=YES.*URI="(\w*.m3u8)', line)
             if subsearch:
                 subsFile = subsearch.group(1)
                 break
-        if subsFile:
+        if len(subsFile) > 0:
             subsFile = urllib.urlopen(videoPath + subsFile).read()
             subsFile = subsFile.encode('utf8')
             vttSubs = ''
@@ -185,8 +188,8 @@ class TV3PlayAddon(object):
                 if chunk:
                     vttSubs = vttSubs + '\n'
                     vttSubs = vttSubs + urllib.urlopen(videoPath + chunk.group()).read()
-        srtFile = os.path.join(xbmc.translatePath("special://temp"), 'tv3play.srt')
         if len(vttSubs) > 0:
+            srtFile = os.path.join(xbmc.translatePath("special://temp"), 'tv3play.srt')
             srtSubs = [line.replace('.',',') for line in vttSubs.splitlines(True)]
             fh = open(srtFile, 'w')
             try:
@@ -202,13 +205,14 @@ class TV3PlayAddon(object):
         playlist.add(videoUrl)
         xbmcplugin.setResolvedUrl(HANDLE, True, playlist[0])
 
-        subs_file = self.getSubtitles(videoUrl)
         player = xbmc.Player();
-        start_time = time.time();
-        while not player.isPlaying() and time.time() - start_time < 30:
-            time.sleep(1);
-        if player.isPlaying():
-            xbmc.Player().setSubtitles(subs_file)
+        subs_file = self.getSubtitles(videoUrl)
+        if len(subs_file) > 0:
+            start_time = time.time();
+            while not player.isPlaying() and time.time() - start_time < 30:
+                time.sleep(1);
+            if player.isPlaying():
+                xbmc.Player().setSubtitles(subs_file)
 
     def displayError(self, message='n/a'):
         heading = buggalo.getRandomHeading()
