@@ -155,7 +155,7 @@ class TV3PlayAddon(object):
                 url = streams['medium']
             elif 'low' in streams and streams['low'] is not None:
                 url = streams['low']
-            url = '{0}?action=playVideo&playVideo={1}'.format(PATH, url)
+            url = self._build_url({'action': 'playVideo', 'playVideo': url})
             items.append((url, item))
 
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_EPISODE)
