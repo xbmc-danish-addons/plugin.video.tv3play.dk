@@ -165,8 +165,6 @@ class TV3PlayAddon(object):
 
     def getSubtitles(self, videoUrl):
         videoPath = videoUrl.replace('playlist.m3u8', '')
-        reload(sys)
-        sys.setdefaultencoding('utf8')
 
         playListFile = urllib.urlopen(videoUrl).read()
         playListFile = playListFile.encode('utf-8')
@@ -221,6 +219,8 @@ class TV3PlayAddon(object):
 
 
 if __name__ == '__main__':
+    reload(sys)
+    sys.setdefaultencoding('utf8')
     xbmc.log("{0}{1}".format(sys.argv[0], sys.argv[2]))
     ADDON = xbmcaddon.Addon()
     PATH = sys.argv[0]
