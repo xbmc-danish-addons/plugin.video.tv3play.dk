@@ -141,7 +141,7 @@ class TV3PlayAddon(object):
                         info_labels['episode'] = int(episode['episode'])
 
             item = xbmcgui.ListItem(episode['title'], iconImage=fanart)
-            item.setInfo('episode', info_labels)
+            item.setInfo('video', info_labels)
             item.setProperty('IsPlayable', 'true')
             item.setProperty('Fanart_Image', fanart)
 
