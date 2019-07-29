@@ -111,8 +111,10 @@ class TV3PlayAddon(object):
         for season in seasons:
             infoLabels = {
                 'title': season['title'],
-                'plot': season.get('season_summary', '')
+                'plot': season.get('season_summary', ''),
+                'date': _convert_date(season.get('updated_at', ''))
             }
+
             item = xbmcgui.ListItem(season['title'])
             item.setInfo('video', infoLabels)
             if 'image' in season['_links']:
@@ -126,6 +128,7 @@ class TV3PlayAddon(object):
                                         item, True)
 
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def listEpisodes(self, episodes_url):
