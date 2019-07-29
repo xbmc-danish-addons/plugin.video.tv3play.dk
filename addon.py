@@ -99,10 +99,12 @@ class TV3PlayAddon(object):
         seasons = self.api.get_seasons(seasons_url)
 
         for season in seasons:
-            fanart = season['_links']['image']['href'].format(size='500x500')
-
-            item = xbmcgui.ListItem(season['title'], iconImage=fanart)
-            item.setProperty('Fanart_Image', fanart)
+            item = xbmcgui.ListItem(season['title'])
+            if 'image' in season['_links']:
+                fanart = season['_links']['image']['href'].format(size='500x500')
+                item.setProperty('Fanart_Image', fanart)
+                item.setIconImage(fanart)
+                
             url = self._build_url({'episodes_url': season['_links']['videos']['href']})
             xbmcplugin.addDirectoryItem(HANDLE,
                                         url,
