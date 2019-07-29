@@ -70,10 +70,12 @@ class TV3PlayAddon(object):
         for channel_id, channel_name in self.api.get_channels().iteritems():
             item = xbmcgui.ListItem(channel_name, iconImage=self.api.get_channel_icon(channel_id))
             item.setProperty('Fanart_Image', FANART)
+            item.setInfo('video', {'title': channel_name})
             url = self._build_url({'channel': channel_id})
             items.append((url, item, True))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def listShows(self, channel):
