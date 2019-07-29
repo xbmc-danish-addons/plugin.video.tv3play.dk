@@ -87,15 +87,13 @@ class TV3PlayAddon(object):
 
         for show in shows:
             fanart = show['image']
-
             infoLabels = {
-                'title': show['title']
-                #'plot': show['description']
+                'title': show['title'],
+                'plot': show.get('description', '') or show.get('summary', ''),
+                'plotoutline': show.get('summary', ''),
+                'date': _convert_date(show.get('updated_at', ''))
             }
-
-            if 'updated_at' in show:
-                infoLabels['date'] = _convert_date(show['updated_at'])
-
+            
             item = xbmcgui.ListItem(show['title'], iconImage=fanart)
             item.setInfo('video', infoLabels)
             item.setProperty('Fanart_Image', fanart)
