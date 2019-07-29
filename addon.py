@@ -109,7 +109,12 @@ class TV3PlayAddon(object):
         seasons = self.api.get_seasons(seasons_url)
 
         for season in seasons:
+            infoLabels = {
+                'title': season['title'],
+                'plot': season.get('season_summary', '')
+            }
             item = xbmcgui.ListItem(season['title'])
+            item.setInfo('video', infoLabels)
             if 'image' in season['_links']:
                 fanart = season['_links']['image']['href'].format(size='500x500')
                 item.setProperty('Fanart_Image', fanart)
