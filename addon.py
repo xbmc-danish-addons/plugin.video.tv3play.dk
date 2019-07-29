@@ -136,7 +136,7 @@ class TV3PlayAddon(object):
             info_labels = {
                 'title': episode['title'],
                 'studio': ADDON.getAddonInfo('name'),
-                'plot': episode['description'],
+                'plot': episode['description'] or episode['summary'],
                 'plotoutline': episode['summary'],
                 'tvshowtitle': episode['format_title']
             }
