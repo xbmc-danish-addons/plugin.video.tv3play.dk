@@ -149,6 +149,9 @@ class MtgApi(object):
                                        {'channels': ','.join(channel_id),
                                         'categories': ''})
 
+            if '_embedded' not in data:
+                break
+            
             for show in data['_embedded']['formats']:
                 shows.append(show)
 
