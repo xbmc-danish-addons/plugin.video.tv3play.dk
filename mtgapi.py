@@ -68,6 +68,7 @@ class MtgApi(object):
     """
 
     CONFIG_URL = "http://playapi.mtgx.tv/v3/config/{channel}"
+    CHANNELS_URL = "https://playapi.mtgx.tv/v3/channels?country={country}"
     ROOT_CHANNELS = {'no': 1550,
                      'se': 1209,
                      'dk': 3687,
@@ -97,15 +98,9 @@ class MtgApi(object):
         """
         Returns a dict of channels. Key is id, value is name
         """
-        formats = next(view for view in self._config['views'] if view['name'] == 'formats')
-        channels = formats['filters']['channels']
-        ret = {}
-        for channel in channels:
-            if ',' in channel['value']:
-                continue
-            ret[channel['value']] = channel['name']
-
-        return ret
+        chlist = self._json_api.call(MtgApi.CHANNELS_URL, {'country': self._region})
+        return {ch['id']: ch['name']
+                for ch in chlist['_embedded']['channels']}
 
     def get_channel_icon(self, channel_id):
         """
