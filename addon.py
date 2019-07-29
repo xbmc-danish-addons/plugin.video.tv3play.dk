@@ -36,6 +36,14 @@ import time
 
 from mtgapi import MtgApi, MtgApiException
 
+
+def _convert_date(s):
+    if s:
+        return '%s.%s.%s' % (s[8:10], s[5:7], s[0:4])
+    else:
+        return ''
+
+
 class TV3PlayAddon(object):
     def __init__(self, region):
         self.region = region
@@ -85,6 +93,9 @@ class TV3PlayAddon(object):
                 #'plot': show['description']
             }
 
+            if 'updated_at' in show:
+                infoLabels['date'] = _convert_date(show['updated_at'])
+
             item = xbmcgui.ListItem(show['title'], iconImage=fanart)
             item.setInfo('video', infoLabels)
             item.setProperty('Fanart_Image', fanart)
@@ -93,6 +104,7 @@ class TV3PlayAddon(object):
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def listSeasons(self, seasons_url):
@@ -134,7 +146,7 @@ class TV3PlayAddon(object):
             if 'broadcasts' in episode:
                 if 'air_at' in episode['broadcasts'] and episode['broadcasts']['air_at'] is not None:
                     airdate = episode['air_at']
-                    info_labels['date'] = '%s.%s.%s' % (airdate[8:10], airdate[5:7], airdate[0:4])
+                    info_labels['date'] = _convert_date(airdate)
                     info_labels['year'] = int(airdate[0:4])
 
             if 'format_position' in episode:
