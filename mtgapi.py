@@ -67,7 +67,7 @@ class MtgApi(object):
     API implementation for the MTG tv services
     """
 
-    CONFIG_URL = "http://playapi.mtgx.tv/v3/config/{channel}"
+    CONFIG_URL = "https://playapi.mtgx.tv/v3/config/{channel}"
     CHANNELS_URL = "https://playapi.mtgx.tv/v3/channels?country={country}"
     ROOT_CHANNELS = {'no': 1550,
                      'se': 1209,
