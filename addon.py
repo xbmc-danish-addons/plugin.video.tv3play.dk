@@ -31,7 +31,6 @@ import xbmcgui
 import xbmcaddon
 import xbmcplugin
 
-import buggalo
 import time
 
 from mtgapi import MtgApi, MtgApiException
@@ -95,7 +94,7 @@ class TV3PlayAddon(object):
                 'plotoutline': show.get('summary', ''),
                 'date': _convert_date(show.get('updated_at', ''))
             }
-            
+
             item = xbmcgui.ListItem(show['title'], iconImage=fanart)
             item.setInfo('video', infoLabels)
             item.setProperty('Fanart_Image', fanart)
@@ -123,7 +122,7 @@ class TV3PlayAddon(object):
                 fanart = season['_links']['image']['href'].format(size='500x500')
                 item.setProperty('Fanart_Image', fanart)
                 item.setIconImage(fanart)
-                
+
             url = self._build_url({'episodes_url': season['_links']['videos']['href']})
             xbmcplugin.addDirectoryItem(HANDLE,
                                         url,
@@ -234,7 +233,7 @@ class TV3PlayAddon(object):
                 xbmc.Player().setSubtitles(subs_file)
 
     def displayError(self, message='n/a'):
-        heading = buggalo.getRandomHeading()
+        heading = "Error"
         line1 = ADDON.getLocalizedString(30200)
         line2 = ADDON.getLocalizedString(30201)
         xbmcgui.Dialog().ok(heading, line1, line2, message)
@@ -261,7 +260,6 @@ if __name__ == '__main__':
     elif ADDON.getSetting('region') in MtgApi.REGIONS:
         r = ADDON.getSetting('region')
 
-    buggalo.SUBMIT_URL = 'http://buggalo.ext.norman.info/submit.php'
     tv3PlayAddon = TV3PlayAddon(r)
     try:
         if 'playVideo' in PARAMS:
@@ -281,4 +279,4 @@ if __name__ == '__main__':
         tv3PlayAddon.displayError(str(ex))
 
     except Exception:
-        buggalo.onExceptionRaised()
+        pass
