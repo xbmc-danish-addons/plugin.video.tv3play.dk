@@ -36,6 +36,14 @@ import time
 
 from mtgapi import MtgApi, MtgApiException
 
+
+def _convert_date(s):
+    if s:
+        return '%s.%s.%s' % (s[8:10], s[5:7], s[0:4])
+    else:
+        return ''
+
+
 class TV3PlayAddon(object):
     def __init__(self, region):
         self.region = region
@@ -62,10 +70,12 @@ class TV3PlayAddon(object):
         for channel_id, channel_name in self.api.get_channels().iteritems():
             item = xbmcgui.ListItem(channel_name, iconImage=self.api.get_channel_icon(channel_id))
             item.setProperty('Fanart_Image', FANART)
+            item.setInfo('video', {'title': channel_name})
             url = self._build_url({'channel': channel_id})
             items.append((url, item, True))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def listShows(self, channel):
@@ -79,12 +89,13 @@ class TV3PlayAddon(object):
 
         for show in shows:
             fanart = show['image']
-
             infoLabels = {
-                'title': show['title']
-                #'plot': show['description']
+                'title': show['title'],
+                'plot': show.get('description', '') or show.get('summary', ''),
+                'plotoutline': show.get('summary', ''),
+                'date': _convert_date(show.get('updated_at', ''))
             }
-
+            
             item = xbmcgui.ListItem(show['title'], iconImage=fanart)
             item.setInfo('video', infoLabels)
             item.setProperty('Fanart_Image', fanart)
@@ -93,22 +104,33 @@ class TV3PlayAddon(object):
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def listSeasons(self, seasons_url):
         seasons = self.api.get_seasons(seasons_url)
 
         for season in seasons:
-            fanart = season['_links']['image']['href'].format(size='500x500')
+            infoLabels = {
+                'title': season['title'],
+                'plot': season.get('season_summary', ''),
+                'date': _convert_date(season.get('updated_at', ''))
+            }
 
-            item = xbmcgui.ListItem(season['title'], iconImage=fanart)
-            item.setProperty('Fanart_Image', fanart)
+            item = xbmcgui.ListItem(season['title'])
+            item.setInfo('video', infoLabels)
+            if 'image' in season['_links']:
+                fanart = season['_links']['image']['href'].format(size='500x500')
+                item.setProperty('Fanart_Image', fanart)
+                item.setIconImage(fanart)
+                
             url = self._build_url({'episodes_url': season['_links']['videos']['href']})
             xbmcplugin.addDirectoryItem(HANDLE,
                                         url,
                                         item, True)
 
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_TITLE)
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def listEpisodes(self, episodes_url):
@@ -122,7 +144,7 @@ class TV3PlayAddon(object):
             info_labels = {
                 'title': episode['title'],
                 'studio': ADDON.getAddonInfo('name'),
-                'plot': episode['description'],
+                'plot': episode['description'] or episode['summary'],
                 'plotoutline': episode['summary'],
                 'tvshowtitle': episode['format_title']
             }
@@ -132,7 +154,7 @@ class TV3PlayAddon(object):
             if 'broadcasts' in episode:
                 if 'air_at' in episode['broadcasts'] and episode['broadcasts']['air_at'] is not None:
                     airdate = episode['air_at']
-                    info_labels['date'] = '%s.%s.%s' % (airdate[8:10], airdate[5:7], airdate[0:4])
+                    info_labels['date'] = _convert_date(airdate)
                     info_labels['year'] = int(airdate[0:4])
 
             if 'format_position' in episode:
@@ -141,7 +163,7 @@ class TV3PlayAddon(object):
                         info_labels['episode'] = int(episode['episode'])
 
             item = xbmcgui.ListItem(episode['title'], iconImage=fanart)
-            item.setInfo('episode', info_labels)
+            item.setInfo('video', info_labels)
             item.setProperty('IsPlayable', 'true')
             item.setProperty('Fanart_Image', fanart)
 
